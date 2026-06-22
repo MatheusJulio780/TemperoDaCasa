@@ -706,14 +706,14 @@
             <button class="close-modal" onclick="closeModal('modal-status')">&times;</button>
             <h2 id="status-title" style="color:var(--success);">Pedido Aceito!</h2>
             <p id="status-desc" style="margin:10px 0; color:var(--text-muted);">Sua quentinha já está na fila.</p>
-
-            <div
-                style="text-align:left; background:#F4EBE1; padding:15px; border-radius:12px; margin-bottom:15px; font-size:0.95rem;">
+            
+            <div style="text-align:left; background:#F4EBE1; padding:15px; border-radius:12px; margin-bottom:15px; font-size:0.95rem;">
                 <strong>Pedido Nº:</strong> <span id="status-num"></span><br>
-                <strong style="margin-top:5px; display:block;">Status Atual:</strong>
-                <span id="status-badge"
-                    style="color:var(--primary); font-weight:bold; font-size:1.1rem;">Preparando</span>
+                <strong style="margin-top:5px; display:block;">Status Atual:</strong> 
+                <span id="status-badge" style="color:var(--primary); font-weight:bold; font-size:1.1rem;">Preparando</span>
             </div>
+
+            <div id="map-tracking" style="height: 200px; width: 100%; border-radius: 12px; margin-bottom: 15px; border: 2px solid #EAE0D8; display: none;"></div>
 
             <button class="btn btn-success" onclick="openWhatsApp()">Falar no WhatsApp</button>
         </div>
@@ -749,6 +749,10 @@
             activeOrderData: null
         };
         let map, marker, unsubscribeSnapshot = null;
+        
+        // NOVO: Variáveis para o mapa de rastreamento do entregador
+        let trackingMap = null;
+        let driverMarker = null;
 
         // CONFIGURAÇÃO GLOBAL (Pronto para integração futura com Firestore)
         const configLoja = {
@@ -764,6 +768,27 @@
                 'Santa Cruz da Serra': { taxa: 5.00, lat: -22.6583, lng: -43.2842 }
             }
         };
+
+        function updateDriverPosition(lat, lng) {
+            // Mostra a div do mapa
+            document.getElementById('map-tracking').style.display = 'block';
+
+            if (!trackingMap) {
+                // Primeira vez: inicializa o mapa
+                trackingMap = L.map('map-tracking').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(trackingMap);
+                
+                // Cria o pino do entregador
+                driverMarker = L.marker([lat, lng]).addTo(trackingMap);
+            } else {
+                // Atualizações seguintes: apenas move a câmera e o pino
+                trackingMap.setView([lat, lng]);
+                driverMarker.setLatLng([lat, lng]);
+            }
+            
+            // Recalcula o tamanho para evitar que o mapa carregue quebrado dentro do Modal
+            setTimeout(() => trackingMap.invalidateSize(), 300);
+        }
 
         // INICIALIZAÇÃO
         async function init() {
@@ -1156,27 +1181,37 @@
         // ================= REAL-TIME LISTENER E PERSISTÊNCIA =================
         function listenToOrder(docId) {
             if (unsubscribeSnapshot) unsubscribeSnapshot();
-
-            // Cria um túnel em tempo real com o Firebase
-            unsubscribeSnapshot = onSnapshot(doc(db, "pedidos", docId), (doc) => {
-                if (doc.exists()) {
-                    const data = doc.data();
+            
+            unsubscribeSnapshot = onSnapshot(doc(db, "pedidos", docId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
                     state.activeOrderData = data;
-
-                    // LÓGICA ATUALIZADA DO PIX / SUCESSO: Agora escuta "preparando"
-                    if (data.status === "preparando") {
+                    
+                    // Condição 1: Pedido entrou em preparo OU já saiu para entrega
+                    if (data.status === "preparando" || data.status === "transporte") {
                         closeModal('modal-pix');
-
+                        
                         // Limpa o carrinho
                         state.cart = [];
                         document.getElementById('cart-badge').innerText = '0';
-
+                        
                         navigate('view-home');
                         document.getElementById('btn-status-pedido').style.display = 'flex';
-                        showStatusModal(data, "Recebido e Preparando!");
+                        
+                        // Define a mensagem dinâmica
+                        const msgTitle = data.status === "transporte" ? "Saiu para Entrega!" : "Recebido e Preparando!";
+                        showStatusModal(data, msgTitle);
 
+                        // LÓGICA DE RASTREAMENTO GPS
+                        if (data.status === "transporte" && data.entregador_coordenadas) {
+                            updateDriverPosition(data.entregador_coordenadas.lat, data.entregador_coordenadas.lng);
+                        } else {
+                            // Oculta o mapa se voltar para 'preparando' ou não houver GPS
+                            document.getElementById('map-tracking').style.display = 'none';
+                        }
+                        
                     } else if (data.status === "entregue" || data.status === "cancelado") {
-                        // Ciclo de vida do pedido acabou. Limpa a memória.
+                        // Ciclo encerrou
                         localStorage.removeItem('tempero_active_order');
                         document.getElementById('btn-status-pedido').style.display = 'none';
                         if (unsubscribeSnapshot) unsubscribeSnapshot();
