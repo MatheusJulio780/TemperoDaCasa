@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tempero da Casa</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --bg-main: #FDFBF9;
+            --surface: #FFFFFF;
+            --text-dark: #2D1B14;
+            --text-muted: #7A6962;
+            --primary: #A67C52;
+            --primary-hover: #8A6440;
+            --accent: #D4A373;
+            --danger: #E07A5F;
+            --success: #4CAF50;
+            --radius: 24px;
+            --shadow: 0 8px 30px rgba(166, 124, 82, 0.12);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--text-dark);
+        }
+
+        /* HEADER & BOTOES FLUTUANTES */
+        .header-actions {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .floating-btn {
+            background: var(--surface);
+            padding: 10px 15px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            border: 2px solid #EAE0D8;
+            transition: var(--transition);
+        }
+
+        .floating-btn:active {
+            transform: scale(0.95);
+        }
+
+        .cart-badge {
+            background: var(--danger);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        #btn-status-pedido {
+            display: none;
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* MODALS (Sobreposição Global) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 30px 25px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        /* Utilitários de View */
+        .view {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 100px;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Botões Globais e Inputs */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(166, 124, 82, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid #EAE0D8;
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--text-dark);
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ================= HOME VIEW ================= */
+        .hero {
+            position: relative;
+            height: 40vh;
+            background: linear-gradient(to bottom, rgba(45, 27, 20, 0.3), rgba(45, 27, 20, 0.8)), url('https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&q=80&w=800') center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px 20px;
+            color: white;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            color: white;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .home-content {
+            padding: 30px 20px;
+        }
+
+        .menu-preview {
+            background: var(--surface);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .home-pratos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .home-prato-item {
+            background: #F4EBE1;
+            color: var(--text-dark);
+            padding: 10px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .home-list {
+            list-style: none;
+            padding-left: 5px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .home-list li {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .home-list li::before {
+            content: "• ";
+            color: var(--primary);
+        }
+
+        /* ================= ORDER VIEW (Montagem) ================= */
+        .top-bar {
+            padding: 20px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .section-box {
+            background: var(--surface);
+            padding: 20px;
+            margin: 15px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .size-grid,
+        .radio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .size-card,
+        .radio-card {
+            border: 2px solid #EAE0D8;
+            border-radius: 16px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--surface);
+        }
+
+        .size-card.active,
+        .radio-card.active {
+            border-color: var(--primary);
+            background: #FCF9F6;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .size-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .size-card p {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .radio-card input[type="radio"] {
+            display: none;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F0E9E4;
+        }
+
+        .checkbox-row:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* ================= CART / CHECKOUT VIEW ================= */
+        .cart-item {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 16px;
+            border: 1px solid #EAE0D8;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-info h4 {
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .cart-item-info p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .cart-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .qtd-input {
+            width: 60px;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .remove-btn {
+            color: var(--danger);
+            background: none;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+
+        /* WIZARD STEPS */
+        .checkout-step {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .checkout-step.active {
+            display: block;
+        }
+
+        #map {
+            height: 250px;
+            width: 100%;
+            border-radius: 16px;
+            margin-top: 15px;
+            border: 2px solid #EAE0D8;
+        }
+
+        .floating-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .pix-box {
+            background: #F4EBE1;
+            padding: 20px;
+            border-radius: 16px;
+            margin: 15px 0;
+            border: 2px dashed var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-actions">
+        <div class="floating-btn" id="btn-status-pedido" onclick="openStatusModal()">
+            🔔 Status
+        </div>
+        <div class="floating-btn" onclick="navigate('view-checkout')" id="floating-cart">
+            🛒 <span id="cart-badge" class="cart-badge">0</span>
+        </div>
+    </div>
+
+    <div id="view-home" class="view active">
+        <div class="hero">
+            <h1>Tempero da Casa</h1>
+            <p>Comida com afeto, entregue na sua porta.</p>
+        </div>
+        <div class="home-content">
+            <div class="menu-preview">
+                <h2>Cardápio de Hoje</h2>
+                <div id="home-menu-content">
+                    <p class="tag">Carregando...</p>
+                </div>
+                <button class="btn btn-primary" onclick="navigate('view-order')" style="margin-top: 15px;">Fazer Pedido
+                    Agora</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-order" class="view">
+        <div class="top-bar">
+            <button class="back-btn" onclick="navigate('view-home')">←</button>
+            <h2>Montar Quentinha</h2>
+        </div>
+
+        <div class="section-box">
+            <h3>1. Escolha o Tamanho</h3>
+            <div class="size-grid">
+                <div class="size-card" onclick="selectSize('M', this)" id="card-M">
+                    <h3>Média</h3>
+                    <p id="preco-m">R$ --</p>
+                </div>
+                <div class="size-card" onclick="selectSize('G', this)" id="card-G">
+                    <h3>Grande</h3>
+                    <p id="preco-g">R$ --</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-box" id="items-container" style="opacity: 0.5; pointer-events: none;">
+            <h3>2. O que vai na sua quentinha?</h3>
+
+            <h4 style="margin-top: 15px; color: var(--primary);">Pratos (Escolha 1)</h4>
+            <div id="list-pratos" class="radio-grid"></div>
+
+            <h4 style="margin-top: 20px; color: var(--primary);">Acompanhamentos</h4>
+            <div id="list-acompanhamentos"></div>
+
+            <h4 style="margin-top: 20px; color: var(--primary);">Saladas</h4>
+            <div id="list-saladas"></div>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Observações</label>
+                <textarea id="item-obs" rows="2" placeholder="Ex: Sem feijão, molho à parte..."></textarea>
+            </div>
+        </div>
+
+        <div class="floating-bar">
+            <button class="btn btn-primary" id="add-cart-btn" onclick="addToCart()" disabled>Adicionar ao
+                Carrinho</button>
+        </div>
+    </div>
+
+    <div id="view-checkout" class="view">
+        <div class="top-bar">
+            <button class="back-btn" onclick="navigate('view-home')">←</button>
+            <h2>Finalizar Pedido</h2>
+        </div>
+
+        <div class="section-box">
+            <h3>Seu Carrinho</h3>
+            <div id="cart-items-container"></div>
+            <div
+                style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: 700; margin-top: 15px; border-top: 2px dashed #EAE0D8; padding-top: 15px;">
+                <span>Total Carrinho:</span>
+                <span id="cart-total" style="color:var(--primary);">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="section-box checkout-step active" id="step-auth">
+            <h3>Identificação</h3>
+            <div class="input-group" style="margin-top:15px;">
+                <label>WhatsApp (Com DDD)</label>
+                <input type="tel" id="cli-tel" placeholder="(21) 99999-9999">
+            </div>
+            <p id="auth-status" style="font-size:0.85rem; color:var(--danger); margin-bottom:10px;"></p>
+            <button class="btn btn-primary" onclick="processAuth()">Prosseguir para Entrega</button>
+        </div>
+
+        <div class="section-box checkout-step" id="step-delivery">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Dados de Entrega</h3>
+                <button onclick="editCustomer()"
+                    style="background:none; border:none; color:var(--primary); text-decoration:underline; font-size:0.9rem;">Editar</button>
+            </div>
+            <div class="input-group" style="margin-top:15px;">
+                <label>Nome Completo</label>
+                <input type="text" id="cli-nome" disabled>
+            </div>
+            <div class="input-group">
+                <label>Rua</label>
+                <input type="text" id="cli-rua" disabled>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group" style="width: 30%;">
+                    <label>Nº</label>
+                    <input type="text" id="cli-num" disabled>
+                </div>
+                <div class="input-group" style="width: 70%;">
+                    <label>Bairro</label>
+                    <select id="cli-bairro" disabled>
+                        <option value="" disabled selected>Selecione...</option>
+                        <option value="Vila Maria Helena">Vila Maria Helena (+ R$ 2,00)</option>
+                        <option value="Jardim Primavera">Jardim Primavera (+ R$ 5,00)</option>
+                        <option value="Santa Cruz da Serra">Santa Cruz da Serra (+ R$ 5,00)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="processDelivery()">Prosseguir e Confirmar Mapa</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="decision-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary); margin-bottom: 10px;">Adicionado!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem;">Sua quentinha foi para o
+                carrinho. O que deseja fazer?</p>
+            <button class="btn btn-primary" onclick="handleDecision(true)" style="margin-bottom: 10px;">Fazer Mais
+                Pedidos</button>
+            <button class="btn btn-outline" onclick="handleDecision(false)">Ir para o Checkout</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-map">
+        <div class="modal-content" style="position:relative;">
+            <button class="close-modal" onclick="closeModal('modal-map')">&times;</button>
+            <h3>Confirme no Mapa</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:5px;">Arraste o pino para a localização
+                exata da entrega.</p>
+            <div id="map"></div>
+            <button class="btn btn-primary" style="margin-top: 15px;" onclick="confirmMap()">Prosseguir para
+                Pagamento</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-payment">
+        <div class="modal-content" style="position:relative;">
+            <button class="close-modal" onclick="closeModal('modal-payment')">&times;</button>
+            <h3>Forma de Pagamento</h3>
+
+            <div class="input-group" style="margin-top:15px; text-align: left;">
+                <label>Selecione o método</label>
+                <select id="pagamento-metodo" onchange="calculateFinalTotal()">
+                    <option value="PIX">PIX (Sem Taxa)</option>
+                    <option value="Dinheiro">Dinheiro (Sem Taxa)</option>
+                    <option value="Débito">Cartão de Débito (+ R$ 1,00)</option>
+                    <option value="Crédito">Cartão de Crédito (+ R$ 2,00)</option>
+                </select>
+            </div>
+
+            <div style="background:#FDF9F6; padding:15px; border-radius:12px; margin:15px 0;">
+                <div
+                    style="display:flex; justify-content:space-between; font-size:0.9rem; color:var(--text-muted); margin-bottom:5px;">
+                    <span>Taxa de Entrega:</span> <span id="taxa-entrega-display"
+                        style="color:var(--text-dark); font-weight:600;">R$ 0,00</span>
+                </div>
+                <span style="font-size:0.9rem; color:var(--text-muted);">Total a Pagar:</span><br>
+                <span style="font-size:1.8rem; font-weight:700; color:var(--primary);" id="final-total-display">R$
+                    0,00</span>
+            </div>
+
+            <button class="btn btn-primary" id="btn-finalizar" onclick="submitOrder()">Confirmar Pedido</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pix">
+        <div class="modal-content">
+            <h2 style="color:var(--primary);">Pagamento PIX</h2>
+            <p style="font-size:0.9rem; color:var(--text-muted); margin:10px 0;">Copie a chave, pague no seu app e
+                aguarde. Esta tela atualizará sozinha quando o restaurante confirmar.</p>
+
+            <div class="pix-box">
+                <strong style="color:var(--text-dark);">Chave Celular:</strong><br>
+                <span
+                    style="font-size:1.4rem; font-weight:700; letter-spacing:1px; color:var(--primary); display:block; margin-top:5px;">(21)
+                    98887-1382</span>
+            </div>
+
+            <p style="font-weight:600; color:var(--danger); animation: pulse 1.5s infinite;">⏳ Aguardando confirmação do
+                restaurante...</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-status">
+        <div class="modal-content" style="position:relative;">
+            <button class="close-modal" onclick="closeModal('modal-status')">&times;</button>
+            <h2 id="status-title" style="color:var(--success);">Pedido Aceito!</h2>
+            <p id="status-desc" style="margin:10px 0; color:var(--text-muted);">Sua quentinha já está na fila.</p>
+
+            <div
+                style="text-align:left; background:#F4EBE1; padding:15px; border-radius:12px; margin-bottom:15px; font-size:0.95rem;">
+                <strong>Pedido Nº:</strong> <span id="status-num"></span><br>
+                <strong style="margin-top:5px; display:block;">Status Atual:</strong>
+                <span id="status-badge"
+                    style="color:var(--primary); font-weight:bold; font-size:1.1rem;">Preparando</span>
+            </div>
+
+            <button class="btn btn-success" onclick="openWhatsApp()">Falar no WhatsApp</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9NyBVa1Ha_42kwos09SV5VTN7NQWqHjM",
+            authDomain: "tempero-da-casa-a2217.firebaseapp.com",
+            projectId: "tempero-da-casa-a2217",
+            storageBucket: "tempero-da-casa-a2217.firebasestorage.app",
+            messagingSenderId: "92967322711",
+            appId: "1:92967322711:web:88d151d9345f9191a8cf12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ESTADO GLOBAL DA APLICAÇÃO
+        let state = {
+            menu: null,
+            cart: [],
+            currentSize: null,
+            currentPrice: 0,
+            mapCoords: { lat: -22.7856, lng: -43.3117 }, // Ponto inicial (Caxias)
+            cartTotalBase: 0,
+            finalTotal: 0,
+            activeOrderId: localStorage.getItem('tempero_active_order') || null,
+            activeOrderData: null
+        };
+        let map, marker, unsubscribeSnapshot = null;
+
+        // CONFIGURAÇÃO GLOBAL (Pronto para integração futura com Firestore)
+        const configLoja = {
+            taxas_pagamento: {
+                'PIX': 0,
+                'Dinheiro': 0,
+                'Débito': 1.00,
+                'Crédito': 2.00
+            },
+            bairros: {
+                'Vila Maria Helena': { taxa: 2.00, lat: -22.7565, lng: -43.2855 },
+                'Jardim Primavera': { taxa: 5.00, lat: -22.7164, lng: -43.3031 },
+                'Santa Cruz da Serra': { taxa: 5.00, lat: -22.6583, lng: -43.2842 }
+            }
+        };
+
+        // INICIALIZAÇÃO
+        async function init() {
+            await loadMenu();
+            if (state.activeOrderId) await checkPersistedOrder();
+        }
+
+        // FUNÇÕES DE UTILIDADE E MODAIS
+        window.navigate = (viewId) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo(0, 0);
+
+            document.getElementById('floating-cart').style.display = viewId === 'view-checkout' ? 'none' : 'flex';
+            if (viewId === 'view-checkout') renderCart();
+        };
+
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+
+        // ================= CARDÁPIO =================
+        async function loadMenu() {
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+            try {
+                const docSnap = await getDoc(doc(db, "cardapios", today));
+                if (docSnap.exists()) {
+                    state.menu = docSnap.data();
+
+                    // Renderiza Preços
+                    document.getElementById('preco-m').innerText = `R$ ${state.menu.preco_m.toFixed(2)}`;
+                    document.getElementById('preco-g').innerText = `R$ ${state.menu.preco_g.toFixed(2)}`;
+
+                    // Renderiza Home
+                    document.getElementById('home-menu-content').innerHTML = `
+                        <div class="home-pratos-grid">${state.menu.pratos.map(p => `<div class="home-prato-item">${p}</div>`).join('')}</div>
+                        <h4 style="margin-top:15px; font-size:1rem;">Acompanhamentos</h4>
+                        <ul class="home-list">${state.menu.acompanhamentos.map(a => `<li>${a}</li>`).join('')}</ul>
+                        <h4 style="margin-top:15px; font-size:1rem;">Saladas</h4>
+                        <ul class="home-list">${state.menu.saladas.map(s => `<li>${s}</li>`).join('')}</ul>
+                    `;
+
+                    // Renderiza Formulário de Montagem
+                    document.getElementById('list-pratos').innerHTML = state.menu.pratos.map(p => `
+                        <label class="radio-card" onclick="selectPrato(this)">
+                            <input type="radio" name="prato_principal" value="${p}"> ${p}
+                        </label>
+                    `).join('');
+
+                    const makeCheckboxList = (items, type) => items.map(i => `
+                        <label class="checkbox-row">
+                            <input type="checkbox" value="${i}" data-type="${type}"> <span>${i}</span>
+                        </label>
+                    `).join('');
+
+                    document.getElementById('list-acompanhamentos').innerHTML = makeCheckboxList(state.menu.acompanhamentos, 'acompanhamentos');
+                    document.getElementById('list-saladas').innerHTML = makeCheckboxList(state.menu.saladas, 'saladas');
+                } else {
+                    document.getElementById('home-menu-content').innerHTML = '<p>Cardápio de hoje ainda não publicado.</p>';
+                }
+            } catch (e) { console.error("Erro ao carregar cardápio:", e); }
+        }
+
+        // ================= MONTAGEM =================
+        window.selectSize = (size, element) => {
+            document.querySelectorAll('.size-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            state.currentSize = size;
+            state.currentPrice = size === 'M' ? state.menu.preco_m : state.menu.preco_g;
+            document.getElementById('items-container').style.opacity = '1';
+            document.getElementById('items-container').style.pointerEvents = 'auto';
+            checkReady();
+        };
+
+        window.selectPrato = (element) => {
+            document.querySelectorAll('.radio-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            checkReady();
+        };
+
+        window.checkReady = () => {
+            const prato = document.querySelector('input[name="prato_principal"]:checked');
+            if (state.currentSize && prato) {
+                const btn = document.getElementById('add-cart-btn');
+                btn.disabled = false;
+                btn.innerText = `Adicionar - R$ ${state.currentPrice.toFixed(2)}`;
+            }
+        };
+
+        window.addToCart = () => {
+            const prato = document.querySelector('input[name="prato_principal"]:checked').value;
+            const getChecked = (t) => Array.from(document.querySelectorAll(`input[data-type="${t}"]:checked`)).map(e => e.value);
+
+            state.cart.push({
+                id: Date.now(),
+                tamanho: state.currentSize,
+                preco_unitario: state.currentPrice,
+                quantidade: 1,
+                descricao: `Quentinha (${state.currentSize}) - ${prato}`,
+                detalhes: [...getChecked('acompanhamentos'), ...getChecked('saladas')].join(', '),
+                observacao: document.getElementById('item-obs').value
+            });
+
+            document.getElementById('cart-badge').innerText = state.cart.length;
+            openModal('decision-modal');
+        };
+
+        // A CORREÇÃO DA TELA BRANCA ESTÁ AQUI
+        window.handleDecision = (continuarPedindo) => {
+            closeModal('decision-modal');
+
+            if (continuarPedindo) {
+                // Reseta apenas os inputs e os cards ESPECÍFICOS do formulário, preservando o Layout e a View.
+                document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(el => el.checked = false);
+                document.querySelectorAll('.size-card.active, .radio-card.active').forEach(el => el.classList.remove('active'));
+                document.getElementById('item-obs').value = '';
+
+                state.currentSize = null;
+                document.getElementById('items-container').style.opacity = '0.5';
+                document.getElementById('items-container').style.pointerEvents = 'none';
+                document.getElementById('add-cart-btn').disabled = true;
+                document.getElementById('add-cart-btn').innerText = 'Adicionar ao Carrinho';
+                window.scrollTo(0, 0);
+            } else {
+                navigate('view-checkout');
+            }
+        };
+
+        // ================= CARRINHO =================
+        window.renderCart = () => {
+            state.cartTotalBase = 0;
+            const container = document.getElementById('cart-items-container');
+
+            if (state.cart.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Carrinho vazio.</p>';
+                document.getElementById('cart-total').innerText = 'R$ 0,00';
+                return;
+            }
+
+            container.innerHTML = state.cart.map(item => {
+                const subtotal = item.preco_unitario * item.quantidade;
+                state.cartTotalBase += subtotal;
+                return `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4>${item.descricao}</h4>
+                        <p>${item.detalhes || 'Nenhum acompanhamento'}</p>
+                        ${item.observacao ? `<p><em>Obs: ${item.observacao}</em></p>` : ''}
+                        <p style="color: var(--primary); font-weight:600; margin-top:5px;">R$ ${subtotal.toFixed(2)}</p>
+                    </div>
+                    <div class="cart-controls">
+                        <input type="number" class="qtd-input" value="${item.quantidade}" min="1" onchange="updateQtd(${item.id}, this.value)">
+                        <button class="remove-btn" onclick="removeCart(${item.id})">Remover</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('cart-total').innerText = `R$ ${state.cartTotalBase.toFixed(2)}`;
+        };
+
+        window.updateQtd = (id, newQtd) => {
+            const item = state.cart.find(x => x.id === id);
+            if (item && newQtd > 0) {
+                item.quantidade = parseInt(newQtd);
+                renderCart();
+            }
+        };
+
+        window.removeCart = (id) => {
+            state.cart = state.cart.filter(x => x.id !== id);
+            document.getElementById('cart-badge').innerText = state.cart.length;
+            renderCart();
+            if (state.cart.length === 0) navigate('view-home');
+        };
+
+        // ================= WIZARD (PASSOS DO CHECKOUT) =================
+        window.processAuth = async () => {
+            const tel = document.getElementById('cli-tel').value.replace(/\D/g, '');
+            if (tel.length < 10) return alert("Por favor, digite um WhatsApp válido com DDD.");
+
+            try {
+                const docSnap = await getDoc(doc(db, "clientes", tel));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('cli-nome').value = data.nome;
+                    document.getElementById('cli-rua').value = data.endereco.rua;
+                    document.getElementById('cli-num').value = data.endereco.numero;
+                    document.getElementById('cli-bairro').value = data.endereco.bairro;
+                    if (data.coordenadas) state.mapCoords = data.coordenadas;
+                    lockForm(true);
+                } else {
+                    lockForm(false);
+                    ['cli-nome', 'cli-rua', 'cli-num', 'cli-bairro'].forEach(id => document.getElementById(id).value = '');
+                }
+
+                document.getElementById('step-auth').classList.remove('active');
+                document.getElementById('step-delivery').classList.add('active');
+            } catch (e) {
+                console.error(e);
+                lockForm(false);
+                document.getElementById('step-auth').classList.remove('active');
+                document.getElementById('step-delivery').classList.add('active');
+            }
+        };
+
+        window.editCustomer = () => lockForm(false);
+        function lockForm(lock) { ['cli-nome', 'cli-rua', 'cli-num', 'cli-bairro'].forEach(id => document.getElementById(id).disabled = lock); }
+
+        window.processDelivery = async () => {
+            const rua = document.getElementById('cli-rua').value.trim();
+            const bairro = document.getElementById('cli-bairro').value;
+
+            if (!rua || !bairro) return alert("Preencha a Rua e selecione o Bairro.");
+
+            // Define a coordenada de "Fallback" baseada no bairro escolhido
+            const bairroCoords = configLoja.bairros[bairro];
+            state.mapCoords = { lat: bairroCoords.lat, lng: bairroCoords.lng };
+
+            openModal('modal-map');
+
+            if (!map) {
+                map = L.map('map').setView([state.mapCoords.lat, state.mapCoords.lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                marker = L.marker([state.mapCoords.lat, state.mapCoords.lng], { draggable: true }).addTo(map);
+                marker.on('dragend', () => state.mapCoords = marker.getLatLng());
+            }
+
+            try {
+                // CORREÇÃO: Busca Estruturada. Trava a pesquisa em Caxias/RJ.
+                // Se a rua não existir, ele vai falhar (o que é bom) e usar o centro do bairro.
+                const urlBusca = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(rua)}&city=Duque+de+Caxias&state=RJ&format=json&limit=1`;
+                
+                const res = await fetch(urlBusca, {
+                    headers: { 'User-Agent': 'TemperoDaCasaApp/1.0' }
+                });
+                const data = await res.json();
+
+                if (data && data.length > 0) {
+                    state.mapCoords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+                } else {
+                    document.querySelector('#modal-map p').innerText = "Rua não localizada no GPS. O pino está no centro do seu bairro, arraste-o para a sua casa.";
+                    document.querySelector('#modal-map p').style.color = "var(--danger)";
+                }
+            } catch (e) {
+                console.error("Geocoding falhou. Mantendo pino no bairro.", e);
+            }
+
+            // Atualiza a visão final (Seja da rua ou do bairro)
+            map.setView([state.mapCoords.lat, state.mapCoords.lng], 16);
+            marker.setLatLng([state.mapCoords.lat, state.mapCoords.lng]);
+            setTimeout(() => map.invalidateSize(), 300);
+        };
+
+        window.confirmMap = () => {
+            closeModal('modal-map');
+            calculateFinalTotal();
+            openModal('modal-payment');
+        };
+
+        window.calculateFinalTotal = () => {
+            const metodo = document.getElementById('pagamento-metodo').value;
+            const bairro = document.getElementById('cli-bairro').value;
+
+            // Busca os valores no objeto de configuração
+            const taxaPagamento = configLoja.taxas_pagamento[metodo] || 0;
+            const taxaEntrega = bairro && configLoja.bairros[bairro] ? configLoja.bairros[bairro].taxa : 0;
+
+            // Matemática pura
+            state.finalTotal = state.cartTotalBase + taxaPagamento + taxaEntrega;
+
+            // Atualiza a UI
+            document.getElementById('taxa-entrega-display').innerText = `R$ ${taxaEntrega.toFixed(2)}`;
+            document.getElementById('final-total-display').innerText = `R$ ${state.finalTotal.toFixed(2)}`;
+        };
+
+        // Adicione esta função inteira ao seu script
+        window.updateMap = async () => {
+            const rua = document.getElementById('cli-rua').value;
+            const num = document.getElementById('cli-num').value;
+            const bairro = document.getElementById('cli-bairro').value;
+
+            if (!rua || !bairro || !map) return;
+
+            try {
+                const query = `${rua}, ${num}, ${bairro}, Duque de Caxias, Rio de Janeiro`;
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                const data = await res.json();
+
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+
+                    state.mapCoords = { lat, lng: lon };
+                    map.setView([lat, lon], 17);
+                    marker.setLatLng([lat, lon]);
+                }
+            } catch (e) {
+                console.error("Erro ao buscar mapa:", e);
+            }
+        };
+
+        // ================= SUBMIT E BANCO DE DADOS =================
+        window.submitOrder = async () => {
+            // RECUPERE O TELEFONE DO INPUT DIRETO, NÃO DA VARIÁVEL DA OUTRA FUNÇÃO
+            const telInput = document.getElementById('cli-tel').value.replace(/\D/g, '');
+            if (!telInput) return alert("Telefone não identificado.");
+
+            // Use telInput daqui para baixo
+            const tel = telInput;
+            if (state.cart.length === 0) return alert("Seu carrinho está vazio.");
+
+            const btn = document.getElementById('btn-finalizar');
+            btn.innerText = "Processando...";
+            btn.disabled = true;
+
+            // Substitua o bloco de clienteData no submitOrder por este:
+            const clienteData = {
+                telefone: tel,
+                nome: document.getElementById('cli-nome').value,
+                endereco: {
+                    rua: document.getElementById('cli-rua').value,
+                    numero: document.getElementById('cli-num').value,
+                    bairro: document.getElementById('cli-bairro').value
+                },
+                // Extraímos explicitamente lat e lng para evitar o erro do "custom Object"
+                coordenadas: {
+                    lat: parseFloat(state.mapCoords.lat || -22.7856),
+                    lng: parseFloat(state.mapCoords.lng || -43.3117)
+                },
+            };
+
+            const metodo = document.getElementById('pagamento-metodo').value;
+
+            const payload = {
+                numero_curto: Date.now().toString(36).slice(-4).toUpperCase(),
+                cliente: { nome: clienteData.nome, telefone: tel },
+                endereco: clienteData.endereco,
+                
+                // CORREÇÃO: Forçando a limpeza dos dados aqui também!
+                coordenadas: {
+                    lat: parseFloat(state.mapCoords.lat || -22.7856),
+                    lng: parseFloat(state.mapCoords.lng || -43.3117)
+                },
+                
+                itens: state.cart.map(i => ({
+                    quantidade: i.quantidade,
+                    nome: i.descricao,
+                    observacao: i.detalhes + (i.observacao ? ` | Obs: ${i.observacao}` : ''),
+                    preco_unitario: i.preco_unitario
+                })),
+                pagamento: {
+                    metodo: document.getElementById('pagamento-metodo').value,
+                    valor_total: state.finalTotal,
+                    taxa_entrega: configLoja.bairros[document.getElementById('cli-bairro').value].taxa,
+                    taxa_pagamento: configLoja.taxas_pagamento[document.getElementById('pagamento-metodo').value]
+                },
+                status: metodo === "PIX" ? "aguardando_pix" : "pendente",
+                timestamps: { criado_em: new Date().toISOString() }
+            };
+
+            try {
+                await setDoc(doc(db, "clientes", tel), clienteData);
+                const docRef = await addDoc(collection(db, "pedidos"), payload);
+
+                // SALVA A PERSISTÊNCIA NA MEMÓRIA DO CELULAR
+                localStorage.setItem('tempero_active_order', docRef.id);
+                state.activeOrderId = docRef.id;
+
+                closeModal('modal-payment');
+
+                if (metodo === "PIX") {
+                    openModal('modal-pix');
+                    listenToOrder(docRef.id);
+                } else {
+                    // Dinheiro / Cartão na Entrega
+                    state.cart = [];
+                    document.getElementById('cart-badge').innerText = '0';
+                    navigate('view-home');
+                    document.getElementById('btn-status-pedido').style.display = 'flex';
+                    showStatusModal(payload, "Pagamento na Entrega!");
+                    listenToOrder(docRef.id); // Continua escutando para quando o admin mudar para preparando/entregue
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao enviar pedido. Tente novamente.");
+                btn.innerText = "Confirmar Pedido";
+                btn.disabled = false;
+            }
+        };
+
+        // ================= REAL-TIME LISTENER E PERSISTÊNCIA =================
+        function listenToOrder(docId) {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+            // Cria um túnel em tempo real com o Firebase
+            unsubscribeSnapshot = onSnapshot(doc(db, "pedidos", docId), (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    state.activeOrderData = data;
+
+                    // LÓGICA ATUALIZADA DO PIX / SUCESSO: Agora escuta "preparando"
+                    if (data.status === "preparando") {
+                        closeModal('modal-pix');
+
+                        // Limpa o carrinho
+                        state.cart = [];
+                        document.getElementById('cart-badge').innerText = '0';
+
+                        navigate('view-home');
+                        document.getElementById('btn-status-pedido').style.display = 'flex';
+                        showStatusModal(data, "Recebido e Preparando!");
+
+                    } else if (data.status === "entregue" || data.status === "cancelado") {
+                        // Ciclo de vida do pedido acabou. Limpa a memória.
+                        localStorage.removeItem('tempero_active_order');
+                        document.getElementById('btn-status-pedido').style.display = 'none';
+                        if (unsubscribeSnapshot) unsubscribeSnapshot();
+                    }
+                }
+            });
+        }
+
+        async function checkPersistedOrder() {
+            try {
+                const docSnap = await getDoc(doc(db, "pedidos", state.activeOrderId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.status !== "entregue" && data.status !== "cancelado") {
+                        // Pedido ainda está ativo! Mostra o botão e volta a escutar.
+                        document.getElementById('btn-status-pedido').style.display = 'flex';
+                        state.activeOrderData = data;
+                        listenToOrder(state.activeOrderId);
+                    } else {
+                        localStorage.removeItem('tempero_active_order');
+                    }
+                } else {
+                    localStorage.removeItem('tempero_active_order');
+                }
+            } catch (e) { console.log("Erro na persistência."); }
+        }
+
+        // ================= WHATSAPP E STATUS =================
+        window.openStatusModal = () => {
+            if (state.activeOrderData) {
+                const msg = state.activeOrderData.status === 'aguardando_pix' ? 'Aguardando Pagamento' : 'Em Andamento';
+                showStatusModal(state.activeOrderData, msg);
+            }
+        };
+
+        function showStatusModal(data, msgTitle) {
+            document.getElementById('status-title').innerText = msgTitle;
+            document.getElementById('status-num').innerText = data.numero_curto;
+            document.getElementById('status-badge').innerText = data.status.toUpperCase();
+            openModal('modal-status');
+        }
+
+        window.openWhatsApp = () => {
+            if (!state.activeOrderData) return;
+            const nomeCli = state.activeOrderData.cliente.nome || 'Cliente';
+            const numPed = state.activeOrderData.numero_curto;
+            const text = `Olá, Tempero da Casa! Sou ${nomeCli}. Gostaria de acompanhar meu pedido #${numPed}.`;
+            window.open(`https://wa.me/5521988871382?text=${encodeURIComponent(text)}`, '_blank');
+        };
+
+        // Inicia App
+        init();
+    </script>
+</body>
+
+</html>
