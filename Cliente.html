@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="logo.png" type="image/png">
     <title>Tempero da Casa</title>
 
     <link
@@ -243,7 +244,8 @@
         .hero {
             position: relative;
             height: 40vh;
-            background: linear-gradient(to bottom, rgba(45, 27, 20, 0.3), rgba(45, 27, 20, 0.8)), url('https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&q=80&w=800') center/cover;
+            background: linear-gradient(to bottom, rgba(45, 27, 20, 0.3), rgba(45, 27, 20, 0.8)), 
+                url('./banner.png') center/cover;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -271,6 +273,7 @@
 
         .menu-preview {
             background: var(--surface);
+            text-align: center;
             padding: 25px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
@@ -279,6 +282,7 @@
 
         .home-pratos-grid {
             display: grid;
+            padding: 20px;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 15px;
@@ -298,7 +302,7 @@
             list-style: none;
             padding-left: 5px;
             margin-bottom: 15px;
-            text-align: left;
+            text-align: center;
         }
 
         .home-list li {
