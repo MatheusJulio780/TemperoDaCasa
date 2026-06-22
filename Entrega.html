@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <style>
         :root {
             --bg-body: #F4F0EC;
@@ -46,19 +48,16 @@
 
         body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 80px; overflow-x: hidden; }
 
-        /* HEADER */
         header { background: var(--bg-card); padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
         .header-title { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--primary); }
         .theme-btn { background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; }
 
-        /* VIEWS */
         .view { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .section-title { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; }
 
-        /* CARDS DE PEDIDO */
         .driver-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); border: 1px solid rgba(166, 124, 82, 0.1); position: relative; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; }
         .order-id { font-size: 1.3rem; font-weight: 700; color: var(--text-main); }
@@ -73,14 +72,13 @@
         .payment-box.collect { background: var(--collect-bg); color: var(--collect-text); border: 1px solid var(--collect-text); }
         .pay-val { font-size: 1.2rem; font-weight: 700; }
 
-        /* BOTÕES DE AÇÃO */
         .btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.1s; }
         .btn:active { transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(166, 124, 82, 0.3); }
         .btn-success { background: var(--success); color: white; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
         
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-icon { background: var(--bg-body); color: var(--text-main); padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem; font-weight: 600; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .btn-icon { background: var(--bg-body); color: var(--text-main); padding: 12px 5px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.05); font-size: 0.75rem; font-weight: 600; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
         .btn-icon i { font-size: 1.2rem; color: var(--primary); }
 
         .items-toggle { background: none; border: none; color: var(--text-muted); width: 100%; text-align: left; padding: 10px 0; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; border-top: 1px dashed rgba(0,0,0,0.1); margin-top: 10px; }
@@ -89,7 +87,6 @@
         .items-list li { font-size: 0.85rem; margin-bottom: 5px; color: var(--text-muted); list-style: none; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 5px; }
         .items-list li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-        /* BOTTOM NAV */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); display: flex; box-shadow: var(--shadow); z-index: 100; border-top: 1px solid rgba(0,0,0,0.05); }
         .nav-item { flex: 1; padding: 15px 0; text-align: center; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
         .nav-item i { font-size: 1.4rem; transition: transform 0.2s; }
@@ -97,9 +94,21 @@
         .nav-item.active i { transform: translateY(-3px); }
         
         .badge { background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; top: 8px; margin-left: 20px; }
-
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
         .empty-state i { font-size: 3rem; color: var(--primary); opacity: 0.5; margin-bottom: 15px; }
+
+        /* MODAL MAPA IN-APP */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: flex-end; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--bg-card); width: 100%; height: 80vh; border-top-left-radius: 25px; border-top-right-radius: 25px; padding: 20px; display: flex; flex-direction: column; animation: slideUp 0.3s; position: relative; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; border: none; background: none; color: var(--text-muted); cursor: pointer; z-index: 2001; }
+        #inapp-map { flex: 1; border-radius: 15px; border: 2px solid rgba(0,0,0,0.1); margin-top: 15px; z-index: 10; }
+        
+        /* Indicador de GPS ativo */
+        .gps-active-banner { background: var(--danger); color: white; text-align: center; font-size: 0.8rem; font-weight: bold; padding: 5px; position: fixed; top: 60px; width: 100%; z-index: 99; display: none; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body data-theme="light">
@@ -108,6 +117,8 @@
         <div class="header-title"><i class="fa-solid fa-motorcycle"></i> Tempero da Casa - Entrega</div>
         <button class="theme-toggle theme-btn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
     </header>
+
+    <div id="gps-banner" class="gps-active-banner"><i class="fa-solid fa-satellite-dish"></i> Transmitindo GPS para o Cliente...</div>
 
     <main id="view-coletas" class="view active">
         <div class="section-title">Pedidos na Cozinha / Prontos <span id="count-coleta" style="float: right; color: var(--primary);">0</span></div>
@@ -136,6 +147,17 @@
         </div>
     </nav>
 
+    <div class="modal-overlay" id="modal-mapa">
+        <div class="modal-content">
+            <button class="close-modal" onclick="fecharMapaInApp()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 style="color: var(--primary);"><i class="fa-solid fa-route"></i> Rota do Pedido</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="map-address-label">Carregando...</p>
+            <div id="inapp-map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -152,6 +174,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // --- VARIÁVEIS GLOBAIS MAPA E GPS ---
+        let mapInstance = null;
+        let clientMarker = null;
+        let driverMarker = null;
+        let watchPositionId = null;
+        let driverLat = -22.7856; // Padrão Duque de Caxias
+        let driverLng = -43.3117; 
+        
         // --- NAVEGAÇÃO E TEMA ---
         window.switchTab = (tab) => {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -173,7 +203,81 @@
             icon.className = icon.className.includes('down') ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
         };
 
-        // --- INTEGRAÇÃO FIREBASE ---
+        // --- MAPA IN-APP ---
+        window.abrirMapaInApp = (cliLat, cliLng, enderecoCompleto) => {
+            document.getElementById('modal-mapa').classList.add('active');
+            document.getElementById('map-address-label').innerText = enderecoCompleto;
+
+            setTimeout(() => {
+                if (!mapInstance) {
+                    mapInstance = L.map('inapp-map').setView([driverLat, driverLng], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+                    
+                    // Ícones Customizados
+                    const driverIcon = L.divIcon({ html: '<i class="fa-solid fa-motorcycle" style="color: #2196F3; font-size: 24px; background: white; padding: 5px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"></i>', className: 'custom-icon', iconSize: [34, 34], iconAnchor: [17, 17] });
+                    const clientIcon = L.divIcon({ html: '<i class="fa-solid fa-location-dot" style="color: #D32F2F; font-size: 30px; filter: drop-shadow(0px 3px 2px rgba(0,0,0,0.4));"></i>', className: 'custom-icon', iconSize: [30, 30], iconAnchor: [15, 30] });
+
+                    driverMarker = L.marker([driverLat, driverLng], {icon: driverIcon}).addTo(mapInstance).bindPopup("Você");
+                    
+                    if(cliLat && cliLng) {
+                        clientMarker = L.marker([cliLat, cliLng], {icon: clientIcon}).addTo(mapInstance).bindPopup("Cliente");
+                        // Ajusta o zoom para mostrar ambos
+                        const group = new L.featureGroup([driverMarker, clientMarker]);
+                        mapInstance.fitBounds(group.getBounds(), {padding: [30, 30]});
+                    }
+                } else {
+                    mapInstance.invalidateSize();
+                    if(cliLat && cliLng && clientMarker) {
+                        clientMarker.setLatLng([cliLat, cliLng]);
+                        const group = new L.featureGroup([driverMarker, clientMarker]);
+                        mapInstance.fitBounds(group.getBounds(), {padding: [30, 30]});
+                    }
+                }
+            }, 300);
+        };
+
+        window.fecharMapaInApp = () => {
+            document.getElementById('modal-mapa').classList.remove('active');
+        };
+
+        // --- SISTEMA DE RASTREAMENTO GPS (Envia pro Firestore) ---
+        function startTracking(pedidoId) {
+            if ("geolocation" in navigator) {
+                document.getElementById('gps-banner').style.display = 'block';
+                
+                watchPositionId = navigator.geolocation.watchPosition(
+                    async (position) => {
+                        driverLat = position.coords.latitude;
+                        driverLng = position.coords.longitude;
+                        
+                        // Atualiza o marcador no mapa In-App se estiver aberto
+                        if(driverMarker) { driverMarker.setLatLng([driverLat, driverLng]); }
+
+                        // Atualiza silenciosamente no Firebase para o cliente ver
+                        try {
+                            await updateDoc(doc(db, "pedidos", pedidoId), {
+                                entregador_coordenadas: { lat: driverLat, lng: driverLng }
+                            });
+                        } catch (e) { console.log("Aviso: Falha ao enviar GPS, tentando novamente."); }
+                    },
+                    (error) => console.warn("Erro GPS", error),
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                );
+            } else {
+                alert("O GPS não é suportado no seu dispositivo.");
+            }
+        }
+
+        function stopTracking() {
+            if (watchPositionId !== null) {
+                navigator.geolocation.clearWatch(watchPositionId);
+                watchPositionId = null;
+            }
+            document.getElementById('gps-banner').style.display = 'none';
+        }
+
+
+        // --- INTEGRAÇÃO FIREBASE (LISTAGEM) ---
         onSnapshot(query(collection(db, "pedidos"), orderBy("timestamps.criado_em", "asc")), (snapshot) => {
             const listColetas = document.getElementById('list-coletas');
             const listEntregas = document.getElementById('list-entregas');
@@ -190,11 +294,10 @@
                         const cardHtml = generateDriverCard(docSnap.id, order, safeStatus);
                         if (safeStatus === 'preparando') { htmlColetas += cardHtml; countColeta++; }
                         if (safeStatus === 'transporte') { htmlEntregas += cardHtml; countEntrega++; }
-                    } catch (err) { console.warn("Pedido corrompido isolado no app do motorista:", docSnap.id); }
+                    } catch (err) { console.warn("Pedido isolado:", docSnap.id); }
                 }
             });
 
-            // Atualiza UI
             listColetas.innerHTML = countColeta > 0 ? htmlColetas : `<div class="empty-state"><i class="fa-solid fa-box-open"></i><p>Nenhum pedido aguardando coleta.</p></div>`;
             listEntregas.innerHTML = countEntrega > 0 ? htmlEntregas : `<div class="empty-state"><i class="fa-solid fa-map-location-dot"></i><p>Nenhuma entrega em andamento.</p></div>`;
             
@@ -220,7 +323,6 @@
             const end = order.endereco || {};
             const endFull = `${end.rua || 'Rua não informada'}, ${end.numero || 'S/N'} - ${end.bairro || ''}`;
             
-            // Lógica Financeira (Crucial para o Motorista)
             const metodo = order.pagamento?.metodo || 'Dinheiro';
             const val = (Number(order.pagamento?.valor_total) || 0).toFixed(2);
             const isPix = metodo.toUpperCase() === 'PIX';
@@ -232,7 +334,6 @@
                 payBox = `<div class="payment-box collect"><div style="display:flex; flex-direction:column; font-size:0.8rem;"><span>COBRAR NA ENTREGA</span><span style="font-weight:400;">(${metodo})</span></div> <div class="pay-val">R$ ${val}</div></div>`;
             }
 
-            // Itens do Pedido (Ocultos por padrão)
             let itensHtml = '';
             let totalItens = 0;
             if (order.itens && Array.isArray(order.itens)) {
@@ -243,21 +344,21 @@
                 }).join('');
             }
 
-            // Links de Rotas
-            const linkMaps = (lat && lng) ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endFull+', Duque de Caxias')}`;
+            // Links Roteamento
+            const linkGoogleMaps = (lat && lng) ? `https://www.google.com/maps/search/?api=1&query=$${lat},${lng}` : `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(endFull+', Duque de Caxias')}`;
             const linkWaze = (lat && lng) ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(endFull+', Duque de Caxias')}`;
             const linkWpp = `https://wa.me/55${(order.cliente?.telefone || '').replace(/\D/g, '')}`;
 
-            // Botão Principal
             let mainAction = '';
             let roteirizacaoHtml = '';
 
             if (status === 'preparando') {
-                mainAction = `<button class="btn btn-primary" onclick="updateStatus('${id}', 'transporte')"><i class="fa-solid fa-motorcycle"></i> Iniciar Entrega</button>`;
+                mainAction = `<button class="btn btn-primary" onclick="iniciarEntrega('${id}')"><i class="fa-solid fa-motorcycle"></i> Iniciar Entrega</button>`;
             } else if (status === 'transporte') {
                 roteirizacaoHtml = `
                     <div class="action-grid">
-                        <a href="${linkMaps}" target="_blank" class="btn-icon"><i class="fa-solid fa-map-location-dot"></i> Maps</a>
+                        <button class="btn-icon" onclick="abrirMapaInApp(${lat || null}, ${lng || null}, '${endFull.replace(/'/g, "\\'")}')"><i class="fa-solid fa-map"></i> App Rota</button>
+                        <a href="${linkGoogleMaps}" target="_blank" class="btn-icon"><i class="fa-solid fa-map-location-dot"></i> Maps Ext.</a>
                         <a href="${linkWaze}" target="_blank" class="btn-icon"><i class="fa-brands fa-waze"></i> Waze</a>
                         <a href="${linkWpp}" target="_blank" class="btn-icon"><i class="fa-brands fa-whatsapp"></i> Chat</a>
                     </div>`;
@@ -291,15 +392,25 @@
             `;
         }
 
-        window.updateStatus = async (id, novoStatus) => {
-            try { await updateDoc(doc(db, "pedidos", id), { status: novoStatus }); } 
-            catch (e) { alert("Erro ao atualizar o pedido. Verifique a internet."); }
+        window.iniciarEntrega = async (id) => {
+            try { 
+                // 1. Atualiza Firebase
+                await updateDoc(doc(db, "pedidos", id), { status: 'transporte' }); 
+                // 2. MUDA DE TELA AUTOMATICAMENTE PARA "EM ROTA"
+                switchTab('entregas');
+                // 3. INICIA O RASTREAMENTO DO GPS
+                startTracking(id);
+            } 
+            catch (e) { alert("Erro ao iniciar entrega."); }
         };
 
-        window.confirmarEntrega = (id, isPix, valor) => {
+        window.confirmarEntrega = async (id, isPix, valor) => {
             let msg = isPix ? "Confirma que a entrega foi realizada? (Já está pago via PIX)" : `Atenção: Você cobrou os R$ ${valor} do cliente?\n\nConfirme apenas se já recebeu o pagamento.`;
             if (confirm(msg)) {
-                updateStatus(id, 'entregue');
+                try {
+                    await updateDoc(doc(db, "pedidos", id), { status: 'entregue' });
+                    stopTracking(); // Desliga o GPS
+                } catch (e) { alert("Erro ao confirmar entrega."); }
             }
         };
     </script>
