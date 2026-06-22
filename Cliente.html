@@ -1002,42 +1002,62 @@
 
             if (!rua || !bairro) return alert("Preencha a Rua e selecione o Bairro.");
 
-            // Define a coordenada de "Fallback" baseada no bairro escolhido
+            // Coordenada inicial de Fallback (centro do bairro escolhido, caso o GPS falhe ou seja negado)
             const bairroCoords = configLoja.bairros[bairro];
             state.mapCoords = { lat: bairroCoords.lat, lng: bairroCoords.lng };
 
             openModal('modal-map');
 
+            // 1. Inicializa o mapa caso ele ainda não exista na tela
             if (!map) {
                 map = L.map('map').setView([state.mapCoords.lat, state.mapCoords.lng], 16);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                marker = L.marker([state.mapCoords.lat, state.mapCoords.lng], { draggable: true }).addTo(map);
-                marker.on('dragend', () => state.mapCoords = marker.getLatLng());
-            }
-
-            try {
-                // CORREÇÃO: Busca Estruturada. Trava a pesquisa em Caxias/RJ.
-                // Se a rua não existir, ele vai falhar (o que é bom) e usar o centro do bairro.
-                const urlBusca = `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(rua)}&city=Duque+de+Caxias&state=RJ&format=json&limit=1`;
                 
-                const res = await fetch(urlBusca, {
-                    headers: { 'User-Agent': 'TemperoDaCasaApp/1.0' }
+                marker = L.marker([state.mapCoords.lat, state.mapCoords.lng], { draggable: true }).addTo(map);
+                
+                // GARANTIA: Quando o usuário arrastar o pino, salvamos apenas os números puros para evitar o erro do Firebase
+                marker.on('dragend', () => {
+                    const posicaoPino = marker.getLatLng();
+                    state.mapCoords = { 
+                        lat: parseFloat(posicaoPino.lat), 
+                        lng: parseFloat(posicaoPino.lng) 
+                    };
                 });
-                const data = await res.json();
-
-                if (data && data.length > 0) {
-                    state.mapCoords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-                } else {
-                    document.querySelector('#modal-map p').innerText = "Rua não localizada no GPS. O pino está no centro do seu bairro, arraste-o para a sua casa.";
-                    document.querySelector('#modal-map p').style.color = "var(--danger)";
-                }
-            } catch (e) {
-                console.error("Geocoding falhou. Mantendo pino no bairro.", e);
             }
 
-            // Atualiza a visão final (Seja da rua ou do bairro)
-            map.setView([state.mapCoords.lat, state.mapCoords.lng], 16);
-            marker.setLatLng([state.mapCoords.lat, state.mapCoords.lng]);
+            // 2. CAPTURA DO GPS ATUAL DO CLIENTE (Nativa do Navegador/Celular)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latAtual = parseFloat(position.coords.latitude);
+                        const lngAtual = parseFloat(position.coords.longitude);
+                        
+                        // Atualiza o estado global com a localização real do cliente
+                        state.mapCoords = { lat: latAtual, lng: lngAtual };
+                        
+                        // Move a câmera do mapa e reposiciona o pino com precisão de zoom máxima (18)
+                        map.setView([latAtual, lngAtual], 18);
+                        marker.setLatLng([latAtual, lngAtual]);
+                    },
+                    (error) => {
+                        console.warn("GPS negado ou indisponível. Centralizando no bairro selecionado.");
+                        // Abre no centro do bairro se o cliente negar o GPS
+                        map.setView([state.mapCoords.lat, state.mapCoords.lng], 16);
+                        marker.setLatLng([state.mapCoords.lat, state.mapCoords.lng]);
+                    },
+                    { 
+                        enableHighAccuracy: true, // Força o uso do GPS de alta precisão do celular, não apenas rede
+                        timeout: 6000,            // Limite de 6 segundos para responder antes de ir pro fallback
+                        maximumAge: 0             // Obriga a pegar a localização atualizada do milissegundo presente
+                    }
+                );
+            } else {
+                // Navegador antigo que não suporta geolocalização vai direto pro centro do bairro
+                map.setView([state.mapCoords.lat, state.mapCoords.lng], 16);
+                marker.setLatLng([state.mapCoords.lat, state.mapCoords.lng]);
+            }
+
+            // Recalcula o tamanho da div para o mapa não carregar cinza/cortado dentro do modal
             setTimeout(() => map.invalidateSize(), 300);
         };
 
