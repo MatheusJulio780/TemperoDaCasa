@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chá de Bebê - Floresta Encantada</title>
+    <style>
+        :root {
+            --azul-bebe: #E0F2FE;
+            --verde-bebe: #E8F5E9;
+            --lilas-bebe: #cfa1a1;
+            --lilas-escuro: #cfa1a1;
+            --texto-principal: #4A4A4A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@400;500;600&display=swap');
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--azul-bebe), var(--verde-bebe), var(--lilas-bebe));
+            background-size: 300% 300%;
+            animation: gradientAnim 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* CRÍTICO: Bloqueia a rolagem lateral no mobile */
+            overflow-x: hidden; 
+            padding: 20px 0;
+        }
+
+        @keyframes gradientAnim {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* CONTEINER PRINCIPAL - Responsivo e Centralizado */
+        .cartao-convite {
+            background: rgba(255, 255, 255, 0.95);
+            width: 90%;
+            max-width: 420px;
+            min-height: 600px;
+            border-radius: 24px;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(142, 90, 145, 0.15);
+            padding: 40px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            
+            /* Animação do Cartão */
+            opacity: 0;
+            transform: scale(0.95) translateY(30px);
+            animation: surgirCartao 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes surgirCartao {
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* SISTEMA DE DECORAÇÕES E PNGs */
+        .decoracao {
+            position: absolute;
+            z-index: 20; /* Fica acima do fundo, mas não bloqueia o botão */
+            pointer-events: none; /* Impede que a imagem atrapalhe cliques no celular */
+            opacity: 0;
+            animation: fadeDecoracao 1.5s ease forwards;
+        }
+
+        @keyframes fadeDecoracao {
+            to { opacity: 1; }
+        }
+
+        /* Classes Específicas para Você Inserir os PNGs */
+        .png-floral-topo {
+            top: -20px; left: -20px; width: 140px;
+            animation-delay: 0.5s;
+        }
+        .png-floral-base {
+            bottom: -20px; right: -20px; width: 150px;
+            animation-delay: 0.7s;
+        }
+        .png-fada-esquerda {
+            top: 40%; left: -30px; width: 110px;
+            animation: fadeDecoracao 1.5s ease forwards, flutuar 6s ease-in-out infinite alternate;
+            animation-delay: 1s;
+        }
+        .png-fada-direita {
+            top: 20%; right: -25px; width: 100px;
+            animation: fadeDecoracao 1.5s ease forwards, flutuar 5s ease-in-out infinite alternate-reverse;
+            animation-delay: 1.2s;
+        }
+        .png-borboleta {
+            top: 5%; right: 20px; width: 60px;
+            animation: fadeDecoracao 1.5s ease forwards, flutuarRapido 4s ease-in-out infinite alternate;
+            animation-delay: 1.5s;
+        }
+
+        /* Caixas temporárias para você visualizar onde colocar cada PNG. 
+           Quando colocar as imagens reais, remova o background e o dashed. */
+        img.placeholder {
+            background-color: rgba(142, 90, 145, 0.1);
+            border: 2px dashed var(--lilas-escuro);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            color: var(--lilas-escuro);
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        @keyframes flutuar {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-15px); }
+        }
+        @keyframes flutuarRapido {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-20px) rotate(15deg); }
+        }
+
+        /* TEXTOS COM ANIMAÇÃO EM CASCATA */
+        .animar-texto {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: subirTexto 0.8s ease forwards;
+        }
+
+        @keyframes subirTexto {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 0.8s; }
+        .delay-2 { animation-delay: 1.1s; }
+        .delay-3 { animation-delay: 1.4s; }
+        .delay-4 { animation-delay: 1.7s; }
+
+        .chamada {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--texto-principal);
+            margin: 40px 0 10px 0;
+            z-index: 5;
+        }
+
+        .nome-bebe {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4.8rem;
+            color: var(--lilas-escuro);
+            line-height: 1;
+            margin-bottom: 25px;
+            z-index: 5;
+        }
+
+        .info-bloco {
+            background: rgba(243, 229, 245, 0.5);
+            padding: 15px 20px;
+            border-radius: 12px;
+            width: 100%;
+            margin-bottom: 20px;
+            z-index: 5;
+            border: 1px solid rgba(142, 90, 145, 0.15);
+        }
+
+        .data-hora {
+            font-weight: 600;
+            color: var(--lilas-escuro);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .endereco {
+            font-size: 0.85rem;
+            color: var(--texto-principal);
+            line-height: 1.4;
+        }
+
+        .presente {
+            font-size: 0.9rem;
+            color: var(--lilas-escuro);
+            font-weight: 600;
+            margin-bottom: 30px;
+            z-index: 5;
+        }
+
+        .presente span {
+            display: block;
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.2rem;
+            color: var(--texto-principal);
+            margin-top: 5px;
+        }
+
+        /* BOTÃO INTERATIVO */
+        .btn-marcar {
+            background: linear-gradient(135deg, #A4C396, #8DA881);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            border-radius: 30px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(141, 168, 129, 0.4);
+            transition: all 0.3s;
+            z-index: 5;
+            width: 90%;
+        }
+
+        .btn-marcar:active { transform: scale(0.95); }
+
+        /* MODAL MANTIDO */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.ativo { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center;
+            transform: scale(0.9); transition: 0.3s; border-top: 5px solid var(--lilas-escuro);
+        }
+        .modal-overlay.ativo .modal-content { transform: scale(1); }
+        .modal-content h2 { font-family: 'Great Vibes', cursive; color: var(--lilas-escuro); font-size: 2.5rem; }
+        .modal-content input {
+            width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 8px; font-family: 'Montserrat'; outline: none;
+        }
+        .modal-botoes { display: flex; gap: 10px; }
+        .btn-confirmar { background: #8DA881; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; }
+        .btn-cancelar { background: #f1f1f1; color: #555; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; }
+        #msg-sucesso { display: none; color: #3e702f; font-weight: 600; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="cartao-convite">
+        
+        <img src="./floral-topo.png" class="decoracao png-floral-topo " alt="Floral Topo">
+        
+        <img src="./fada-direita.png" class="decoracao png-fada-esquerda" alt="Fada Esquerda">
+        <img src="./fada-esquerda.png" class="decoracao png-fada-direita" alt="Fada Direita">
+        
+        <img src="./borboleta.png" class="decoracao png-borboleta" alt="Borboleta">
+        
+        <img src="./floral-base.png" class="decoracao png-floral-base" alt="Floral Base">
+        <div class="chamada animar-texto delay-1">Chá da Fadinha</div>
+        <h1 class="nome-bebe animar-texto delay-1">Lavinia</h1>
+
+        <div class="presente">
+            Venha comemorar conosco a chegada da nossa fadinha no seu bosque encantado
+        </div>
+        
+        <div class="info-bloco animar-texto delay-2">
+            <div class="data-hora">01/08/2026 às 16:00h</div>
+            <div class="endereco">Generoso Maynardo, 2565.<br>Bairro Pio XII.</div>
+        </div>
+        
+        <div class="presente animar-texto delay-3">
+            Sugestão de presente:
+            <span>Fralda P/M + Mimo</span>
+        </div>
+
+        <button class="btn-marcar animar-texto delay-4" onclick="abrirModal()">Confirmar Presença</button>
+    </div>
+
+    <div class="modal-overlay" id="modalConfirmacao">
+        <div class="modal-content">
+            <h2>Confirme sua Presença</h2>
+            <p style="font-size: 0.85rem; color: #666;">Digite seu nome completo.</p>
+            <input type="text" id="nomeConvidado" placeholder="Seu nome">
+            <div class="modal-botoes">
+                <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                <button class="btn-confirmar" onclick="enviarConfirmacao()">Confirmar</button>
+            </div>
+            <div id="msg-sucesso">Presença confirmada!</div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modalConfirmacao');
+        const inputNome = document.getElementById('nomeConvidado');
+        const msgSucesso = document.getElementById('msg-sucesso');
+
+        function abrirModal() {
+            modal.classList.add('ativo');
+            inputNome.value = '';
+            msgSucesso.style.display = 'none';
+        }
+        function fecharModal() { modal.classList.remove('ativo'); }
+        function enviarConfirmacao() {
+            if (inputNome.value.trim() === "") return alert("Preencha o nome!");
+            msgSucesso.style.display = 'block';
+            setTimeout(fecharModal, 2000);
+        }
+    </script>
+</body>
+</html>
