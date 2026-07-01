@@ -30,9 +30,29 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            /* CRÍTICO: Bloqueia a rolagem lateral no mobile */
             overflow-x: hidden; 
             padding: 20px 0;
+            position: relative;
+        }
+
+        /* ANIMAÇÃO DE FUNDO LEVE E FOFA (Luzes Flutuantes) */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 12%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.5) 0%, transparent 15%),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, transparent 20%);
+            background-size: 150% 150%;
+            animation: luzesMagicas 6s infinite alternate ease-in-out;
+            z-index: 1; /* Fica atrás do convite */
+            pointer-events: none; /* Não atrapalha o clique */
+        }
+
+        @keyframes luzesMagicas {
+            0% { transform: scale(1) translateY(0); opacity: 0.6; }
+            100% { transform: scale(1.05) translateY(-25px); opacity: 1; }
         }
 
         @keyframes gradientAnim {
@@ -41,7 +61,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* CONTEINER PRINCIPAL - Responsivo e Centralizado */
         .cartao-convite {
             background: rgba(255, 255, 255, 0.95);
             width: 90%;
@@ -57,8 +76,6 @@
             text-align: center;
             z-index: 10;
             border: 1px solid rgba(255, 255, 255, 0.8);
-            
-            /* Animação do Cartão */
             opacity: 0;
             transform: scale(0.95) translateY(30px);
             animation: surgirCartao 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
@@ -68,11 +85,10 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* SISTEMA DE DECORAÇÕES E PNGs */
         .decoracao {
             position: absolute;
-            z-index: 20; /* Fica acima do fundo, mas não bloqueia o botão */
-            pointer-events: none; /* Impede que a imagem atrapalhe cliques no celular */
+            z-index: 20; 
+            pointer-events: none; 
             opacity: 0;
             animation: fadeDecoracao 1.5s ease forwards;
         }
@@ -81,65 +97,18 @@
             to { opacity: 1; }
         }
 
-        /* Classes Específicas para Você Inserir os PNGs */
-        .png-floral-topo {
-            top: -20px; left: -20px; width: 140px;
-            animation-delay: 0.5s;
-        }
-        .png-floral-base {
-            bottom: -20px; right: -20px; width: 150px;
-            animation-delay: 0.7s;
-        }
-        .png-fada-esquerda {
-            top: 40%; left: -30px; width: 110px;
-            animation: fadeDecoracao 1.5s ease forwards, flutuar 6s ease-in-out infinite alternate;
-            animation-delay: 1s;
-        }
-        .png-fada-direita {
-            top: 20%; right: -25px; width: 100px;
-            animation: fadeDecoracao 1.5s ease forwards, flutuar 5s ease-in-out infinite alternate-reverse;
-            animation-delay: 1.2s;
-        }
-        .png-borboleta {
-            top: 5%; right: 20px; width: 60px;
-            animation: fadeDecoracao 1.5s ease forwards, flutuarRapido 4s ease-in-out infinite alternate;
-            animation-delay: 1.5s;
-        }
+        .png-floral-topo { top: -20px; left: -20px; width: 140px; animation-delay: 0.5s; }
+        .png-floral-base { bottom: -20px; right: -20px; width: 150px; animation-delay: 0.7s; }
+        /* Posições das fadas corrigidas */
+        .png-fada-esquerda { top: 43%; left: -35px; width: 110px; animation: fadeDecoracao 1.5s ease forwards, flutuar 6s ease-in-out infinite alternate; animation-delay: 1s; }
+        .png-fada-direita { top: 18%; right: -25px; width: 100px; animation: fadeDecoracao 1.5s ease forwards, flutuar 5s ease-in-out infinite alternate-reverse; animation-delay: 1.2s; }
+        .png-borboleta { top: 5%; right: 20px; width: 60px; animation: fadeDecoracao 1.5s ease forwards, flutuarRapido 4s ease-in-out infinite alternate; animation-delay: 1.5s; }
 
-        /* Caixas temporárias para você visualizar onde colocar cada PNG. 
-           Quando colocar as imagens reais, remova o background e o dashed. */
-        img.placeholder {
-            background-color: rgba(142, 90, 145, 0.1);
-            border: 2px dashed var(--lilas-escuro);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.6rem;
-            color: var(--lilas-escuro);
-            font-weight: bold;
-            padding: 10px;
-        }
+        @keyframes flutuar { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
+        @keyframes flutuarRapido { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(-20px) rotate(15deg); } }
 
-        @keyframes flutuar {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-15px); }
-        }
-        @keyframes flutuarRapido {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(-20px) rotate(15deg); }
-        }
-
-        /* TEXTOS COM ANIMAÇÃO EM CASCATA */
-        .animar-texto {
-            opacity: 0;
-            transform: translateY(15px);
-            animation: subirTexto 0.8s ease forwards;
-        }
-
-        @keyframes subirTexto {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .animar-texto { opacity: 0; transform: translateY(15px); animation: subirTexto 0.8s ease forwards; }
+        @keyframes subirTexto { to { opacity: 1; transform: translateY(0); } }
 
         .delay-1 { animation-delay: 0.8s; }
         .delay-2 { animation-delay: 1.1s; }
@@ -147,129 +116,97 @@
         .delay-4 { animation-delay: 1.7s; }
 
         .chamada {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--texto-principal);
-            margin: 40px 0 10px 0;
-            z-index: 5;
+            font-family: 'Montserrat', sans-serif; font-size: 0.85rem; text-transform: uppercase;
+            letter-spacing: 2px; color: var(--texto-principal); margin: 40px 0 10px 0; z-index: 5;
         }
 
-        .nome-bebe {
-            font-family: 'Great Vibes', cursive;
-            font-size: 4.8rem;
+        .nome-bebe { font-family: 'Great Vibes', cursive; font-size: 4.8rem; color: var(--lilas-escuro); line-height: 1; margin-bottom: 15px; z-index: 5; }
+
+        .texto-intro {
+            font-size: 0.9rem; color: var(--texto-principal); margin-bottom: 25px; line-height: 1.5; z-index: 5;
+        }
+
+        .info-bloco { background: rgba(243, 229, 245, 0.5); padding: 15px 20px; border-radius: 12px; width: 100%; margin-bottom: 20px; z-index: 5; border: 1px solid rgba(142, 90, 145, 0.15); display: flex; flex-direction: column; align-items: center; }
+        .data-hora { font-weight: 600; color: var(--lilas-escuro); font-size: 1.1rem; margin-bottom: 5px; }
+        .endereco { font-size: 0.85rem; color: var(--texto-principal); line-height: 1.4; }
+
+        /* Botão do Mapa Pequeno e Elegante */
+        .btn-mapa {
+            margin-top: 10px;
+            background: transparent;
+            border: 1.5px solid var(--lilas-escuro);
             color: var(--lilas-escuro);
-            line-height: 1;
-            margin-bottom: 25px;
-            z-index: 5;
-        }
-
-        .info-bloco {
-            background: rgba(243, 229, 245, 0.5);
-            padding: 15px 20px;
-            border-radius: 12px;
-            width: 100%;
-            margin-bottom: 20px;
-            z-index: 5;
-            border: 1px solid rgba(142, 90, 145, 0.15);
-        }
-
-        .data-hora {
-            font-weight: 600;
-            color: var(--lilas-escuro);
-            font-size: 1.1rem;
-            margin-bottom: 5px;
-        }
-
-        .endereco {
-            font-size: 0.85rem;
-            color: var(--texto-principal);
-            line-height: 1.4;
-        }
-
-        .presente {
-            font-size: 0.9rem;
-            color: var(--lilas-escuro);
-            font-weight: 600;
-            margin-bottom: 30px;
-            z-index: 5;
-        }
-
-        .presente span {
-            display: block;
-            font-family: 'Great Vibes', cursive;
-            font-size: 1.2rem;
-            color: var(--texto-principal);
-            margin-top: 5px;
-        }
-
-        /* BOTÃO INTERATIVO */
-        .btn-marcar {
-            background: linear-gradient(135deg, #A4C396, #8DA881);
-            color: white;
-            border: none;
-            padding: 15px 35px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-family: 'Montserrat', sans-serif;
             font-weight: 600;
-            border-radius: 30px;
-            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(141, 168, 129, 0.4);
-            transition: all 0.3s;
-            z-index: 5;
-            width: 90%;
         }
 
+        .btn-mapa:hover {
+            background: var(--lilas-escuro);
+            color: white;
+        }
+
+        .presente { font-size: 0.9rem; color: var(--lilas-escuro); font-weight: 600; margin-bottom: 30px; z-index: 5; }
+        .presente span { display: block; font-family: 'Great Vibes', cursive; font-size: 1.8rem; color: var(--texto-principal); margin-top: 5px; }
+
+        .btn-marcar { background: linear-gradient(135deg, #A4C396, #8DA881); color: white; border: none; padding: 15px 35px; font-family: 'Montserrat', sans-serif; font-weight: 600; border-radius: 30px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 0 5px 15px rgba(141, 168, 129, 0.4); transition: all 0.3s; z-index: 5; width: 90%; }
         .btn-marcar:active { transform: scale(0.95); }
 
-        /* MODAL MANTIDO */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s;
-        }
+        /* SISTEMA DE MODAIS (Presença e Mapa) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; visibility: hidden; transition: 0.3s; }
         .modal-overlay.ativo { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center;
-            transform: scale(0.9); transition: 0.3s; border-top: 5px solid var(--lilas-escuro);
-        }
+        
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; transform: scale(0.9); transition: 0.3s; border-top: 5px solid var(--lilas-escuro); position: relative; }
         .modal-overlay.ativo .modal-content { transform: scale(1); }
-        .modal-content h2 { font-family: 'Great Vibes', cursive; color: var(--lilas-escuro); font-size: 2.5rem; }
-        .modal-content input {
-            width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 8px; font-family: 'Montserrat'; outline: none;
-        }
-        .modal-botoes { display: flex; gap: 10px; }
-        .btn-confirmar { background: #8DA881; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; }
-        .btn-cancelar { background: #f1f1f1; color: #555; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; }
-        #msg-sucesso { display: none; color: #3e702f; font-weight: 600; margin-top: 15px; }
+        
+        /* Modal Específico do Mapa */
+        .modal-mapa { padding: 40px 20px 20px 20px; overflow: hidden; border-top: none; }
+        .decoracao-modal { position: absolute; z-index: 1; opacity: 0.6; pointer-events: none; }
+        .modal-topo { top: -10px; left: -10px; width: 110px; }
+        .modal-base { bottom: -10px; right: -10px; width: 120px; }
+        
+        .btn-fechar { position: absolute; top: 12px; right: 15px; background: #f1f1f1; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; color: #555; cursor: pointer; z-index: 10; transition: 0.3s; }
+        .btn-fechar:hover { background: #e2e2e2; }
+        
+        .mapa-container { position: relative; z-index: 5; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 10px; }
+
+        .modal-content h2 { font-family: 'Great Vibes', cursive; color: var(--lilas-escuro); font-size: 2.5rem; position: relative; z-index: 5; }
+        .modal-content input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 8px; font-family: 'Montserrat'; outline: none; position: relative; z-index: 5; }
+        .modal-botoes { display: flex; gap: 10px; position: relative; z-index: 5; }
+        .btn-confirmar { background: #8DA881; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer; }
+        .btn-cancelar { background: #f1f1f1; color: #555; border: none; padding: 10px; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer; }
+        #msg-sucesso { display: none; color: #3e702f; font-weight: 600; margin-top: 15px; position: relative; z-index: 5; }
     </style>
 </head>
 <body>
 
     <div class="cartao-convite">
         
-        <img src="./floral-topo.png" class="decoracao png-floral-topo " alt="Floral Topo">
+        <img src="./floral-topo.png" class="decoracao png-floral-topo" alt="Floral Topo">
+        <img src="./floral-base.png" class="decoracao png-floral-base" alt="Floral Base">
         
         <img src="./fada-direita.png" class="decoracao png-fada-esquerda" alt="Fada Esquerda">
         <img src="./fada-esquerda.png" class="decoracao png-fada-direita" alt="Fada Direita">
         
         <img src="./borboleta.png" class="decoracao png-borboleta" alt="Borboleta">
         
-        <img src="./floral-base.png" class="decoracao png-floral-base" alt="Floral Base">
         <div class="chamada animar-texto delay-1">Chá de Bebê da</div>
-        <h1 class="nome-bebe animar-texto delay-1">Lavinia</h1>
+        <h1 class="nome-bebe animar-texto delay-1">Lavínia</h1>
 
-        <div class="presente">
-            Venha comemorar conosco a chegada da nossa fadinha no seu bosque encantado
+        <div class="texto-intro animar-texto delay-2">
+            Venha comemorar conosco a chegada da nossa fadinha no seu jardim encantado
         </div>
         
         <div class="info-bloco animar-texto delay-2">
-            <div class="data-hora">01/08/2026 às 16:00h</div>
-            <div class="endereco">Generoso Maynardo, 2565.<br>Bairro Pio XII.</div>
+            <div class="data-hora">01/08/2026 às 14:00h</div>
+            <div class="endereco">Av. Padre Guilherme Decaminada, nº 1063.<br>Condominio Casa Blanca</div>
+            <button class="btn-mapa" onclick="abrirMapa()">📍 Ver no Mapa</button>
         </div>
         
         <div class="presente animar-texto delay-3">
@@ -283,31 +220,106 @@
     <div class="modal-overlay" id="modalConfirmacao">
         <div class="modal-content">
             <h2>Confirme sua Presença</h2>
-            <p style="font-size: 0.85rem; color: #666;">Digite seu nome completo.</p>
+            <p style="font-size: 0.85rem; color: #666; position: relative; z-index: 5;">Digite seu nome completo.</p>
             <input type="text" id="nomeConvidado" placeholder="Seu nome">
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-                <button class="btn-confirmar" onclick="enviarConfirmacao()">Confirmar</button>
+                <button class="btn-confirmar" id="btn-salvar" onclick="enviarConfirmacao()">Confirmar</button>
             </div>
             <div id="msg-sucesso">Presença confirmada!</div>
         </div>
     </div>
 
-    <script>
-        const modal = document.getElementById('modalConfirmacao');
+    <div class="modal-overlay" id="modalMapa">
+        <div class="modal-content modal-mapa">
+            <img src="./floral-topo.png" class="decoracao-modal modal-topo" alt="">
+            <img src="./floral-base.png" class="decoracao-modal modal-base" alt="">
+            
+            <button class="btn-fechar" onclick="fecharMapa()">X</button>
+            <h2>Localização</h2>
+            
+            <div class="mapa-container">
+                <iframe src="https://maps.google.com/maps?q=Av.+Padre+Guilherme+Decaminada,+1063+Condominio+Casa+Blanca&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Cole o seu firebaseConfig exato aqui dentro
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_BUCKET",
+            messagingSenderId: "SEU_SENDER",
+            appId: "SEU_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Elementos RSVP
+        const modalConfirmacao = document.getElementById('modalConfirmacao');
         const inputNome = document.getElementById('nomeConvidado');
         const msgSucesso = document.getElementById('msg-sucesso');
+        const btnSalvar = document.getElementById('btn-salvar');
+        
+        // Elemento Mapa
+        const modalMapa = document.getElementById('modalMapa');
 
-        function abrirModal() {
-            modal.classList.add('ativo');
+        // FUNÇÕES DO RSVP
+        window.abrirModal = function() {
+            modalConfirmacao.classList.add('ativo');
             inputNome.value = '';
             msgSucesso.style.display = 'none';
+            btnSalvar.disabled = false;
         }
-        function fecharModal() { modal.classList.remove('ativo'); }
-        function enviarConfirmacao() {
-            if (inputNome.value.trim() === "") return alert("Preencha o nome!");
-            msgSucesso.style.display = 'block';
-            setTimeout(fecharModal, 2000);
+        
+        window.fecharModal = function() { 
+            modalConfirmacao.classList.remove('ativo'); 
+        }
+        
+        window.enviarConfirmacao = async function() {
+            const nome = inputNome.value.trim();
+            if (nome === "") return alert("Preencha o nome!");
+
+            btnSalvar.disabled = true;
+            btnSalvar.innerText = "Salvando...";
+
+            try {
+                await addDoc(collection(db, "presencas_lavinia"), {
+                    nome: nome,
+                    dataRegistro: serverTimestamp()
+                });
+
+                btnSalvar.innerText = "Confirmar";
+                msgSucesso.style.display = 'block';
+                setTimeout(window.fecharModal, 2000);
+            } catch (error) {
+                console.error("Erro no Firebase:", error);
+                alert("Falha na conexão. Tente novamente.");
+                btnSalvar.disabled = false;
+                btnSalvar.innerText = "Confirmar";
+            }
+        }
+
+        // FUNÇÕES DO MAPA
+        window.abrirMapa = function() {
+            modalMapa.classList.add('ativo');
+        }
+
+        window.fecharMapa = function() {
+            modalMapa.classList.remove('ativo');
+        }
+
+        // FECHAR MODAIS CLICANDO FORA
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('ativo');
+            }
         }
     </script>
 </body>
